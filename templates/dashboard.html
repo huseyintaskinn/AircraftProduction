@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            background-color: #f4f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .dashboard-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .dashboard-container h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            border-radius: 4px;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #bd2130;
+        }
+
+        .modal-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        /* Custom DataTable Styling */
+        .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin: 0 3px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:active {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        // Eğer token yoksa index sayfasına yönlendir
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = "{% url 'index' %}";
+        }
+    </script>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <h2 id="username"></h2>
+    <p id="team" class="text-center text-muted"></p>
+    <button class="btn btn-primary" data-toggle="modal" data-target="#modalViewParts">Parçaları Görüntüle</button>
+    <button class="btn btn-info" data-toggle="modal" data-target="#modalAssemble">Montaj Yap</button>
+    <button id="logout-form" class="btn btn-danger">Çıkış Yap</button>
+</div>
+
+<!-- Modal - Parçaları Görüntüle -->
+<div class="modal fade" id="modalViewParts" tabindex="-1" role="dialog" aria-labelledby="modalViewPartsLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalViewPartsLabel">Parçaları Görüntüle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- DataTable için alan -->
+                <table id="partsTable" class="table table-bordered table-striped">
+                    <thead>
+                    <tr>
+                        <th>Parça Adı</th>
+                        <th>Tip</th>
+                        <th>Durum</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Dinamik olarak doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal - Montaj Yap -->
+<div class="modal fade" id="modalAssemble" tabindex="-1" role="dialog" aria-labelledby="modalAssembleLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAssembleLabel">Montaj Yap</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Modal içeriği buraya gelecek -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.5/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+
+<script>
+    function convertTeam(team) {
+        switch (team) {
+            case 'wingTeam':
+                return 'Kanat Takımı';
+            case 'fuselageTeam':
+                return 'Gövde Takımı';
+            case 'tailTeam':
+                return 'Kuyruk Takımı';
+            case 'avionicsTeam':
+                return 'Aviyonik Takımı';
+            case 'assemblyTeam':
+                return 'Montaj Takımı';
+            default:
+                return 'Bilinmiyor';
+        }
+    }
+    
+    function convertPart(part) {
+        switch (part) {
+            case 'wing':
+                return 'Kanat';
+            case 'fuselage':
+                return 'Gövde';
+            case 'tail':
+                return 'Kuyruk';
+            case 'avionics':
+                return 'Aviyonik';
+            case 'assembly':
+                return 'Montaj';
+            default:
+                return 'Bilinmiyor';
+        }
+    }
+
+    document.getElementById("username").textContent = localStorage.getItem("username") || "Kullanıcı Adı";
+    document.getElementById("team").textContent = "Takım: " + convertTeam(localStorage.getItem("team") || "Bilinmiyor");
+
+    document.getElementById("logout-form").onclick = function () {
+        localStorage.clear();
+        window.location.href = "{% url 'index' %}";
+    }
+
+    $(document).ready(function () {
+        const modalViewParts = $('#modalViewParts');
+        const tableBody = $('#partsTable tbody');
+        const team = localStorage.getItem('team');
+        const name = team === 'wingTeam' ? 'wing' : 'fuselageTeam' ? 'fuselage' : 'tailTeam' ? 'tail' : 'avionicsTeam' ? 'avionics' : 'assembly';
+        const aircraftTypes = ['TB2', 'TB3', 'AKINCI', 'KIZILELMA'];
+
+        async function fetchParts() {
+            tableBody.empty();
+            for (const type of aircraftTypes) {
+                const url = `http://127.0.0.1:8000/api/parts/?aircraft_type=${type}&name=${name}`;
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'accept': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        }
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const parts = await response.json();
+                    parts.forEach(part => {
+                        const row = `
+                            <tr>
+                                <td>${convertPart(part.name)}</td>
+                                <td>${part.aircraft_type}</td>
+                                <td>${part.is_used ? "Kullanıldı" : "Kullanılmadı"}</td>
+                            </tr>
+                        `;
+                        tableBody.append(row);
+                    });
+                } catch (error) {
+                    console.error('Error fetching parts:', error);
+                }
+            }
+
+            $('#partsTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "lengthChange": true,
+                "language": {
+                    "search": "Ara:",
+                    "lengthMenu": "Göster: _MENU_",
+                    "info": "Toplam _TOTAL_ parçadan _START_ - _END_ arasını göster",
+                    "infoEmpty": "Veri bulunamadı",
+                    "infoFiltered": "(toplam _MAX_ kayıttan filtrelendi)",
+                    "paginate": {
+                        "next": "Sonraki",
+                        "previous": "Önceki"
+                    }
+                }
+            });
+        }
+
+        modalViewParts.on('show.bs.modal', fetchParts);
+    });
+</script>
+
+</body>
+</html>
