@@ -35,6 +35,20 @@ services:
     entrypoint: /srv/app/entrypoint.sh
     command: python manage.py runserver 0.0.0.0:8000
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      # prevent local node_modules from overriding container node_modules
+      - /app/node_modules
+    depends_on:
+      - app
+
 volumes:
   postgres_data:
   static_data:
