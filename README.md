@@ -30,22 +30,22 @@ Bu proje, BAYKAR Arka Uç Yazılım Uzmanı pozisyonu için özel olarak gelişt
 Projenin modern, responsive ve glassmorphism tasarımlı web arayüzünden örnek ekran görüntüleri:
 
 ### 1. Giriş Ekranı
-![Giriş Ekranı](docs/images/login.png)
+<img width="415" height="370" alt="image" src="https://github.com/user-attachments/assets/432198a6-6c25-4947-b78d-624a68e68b03" />
 
 ### 2. Envanter & Stok Takip Paneli
-![Envanter & Stok Takip Paneli](docs/images/inventory.png)
+<img width="815" height="450" alt="image" src="https://github.com/user-attachments/assets/3a96a62f-5998-4b0d-a32a-dcc4bb177f23" />
 
 ### 3. Parça Üretim İstasyonu
-![Parça Üretim İstasyonu](docs/images/production.png)
+<img width="815" height="375" alt="image" src="https://github.com/user-attachments/assets/4e1aae7b-6e44-48e9-9dd2-c28928b2e0fe" />
 
 ### 4. Uçak Montaj İstasyonu
-![Uçak Montaj İstasyonu](docs/images/assembly.png)
+<img width="815" height="300" alt="image" src="https://github.com/user-attachments/assets/5932dcbd-ae71-4ab1-a928-31e3cc8ac467" />
 
 ### 5. Swagger API Dokümantasyonu (Backend)
-![Swagger API Dokümantasyonu](docs/images/swagger.png)
+<img width="815" height="1000" alt="localhost_8000_swagger_" src="https://github.com/user-attachments/assets/cedf1f20-01e8-48e5-8359-f91677d9ecab" />
 
 ### 6. Django Yönetim (Admin) Paneli
-![Django Yönetim Paneli](docs/images/admin.png)
+<img width="815" height="300" alt="image" src="https://github.com/user-attachments/assets/aec165b6-c351-4031-8bc5-650570c0d9cb" />
 
 ---
 
@@ -102,6 +102,12 @@ Sistemde her departman için otomatik olarak oluşturulmuş hazır test kullanı
 | `tail_worker` | Kuyruk Takımı | Kuyruk (`tail`) |
 | `avionics_worker` | Aviyonik Takımı | Aviyonik (`avionics`) |
 | `assembly_worker` | Montaj Takımı | Sadece Montaj Yapabilir |
+
+Yönetici paneline (`/admin/`) erişmek için aşağıdaki süper kullanıcı bilgilerini kullanabilirsiniz:
+
+*   **Kullanıcı Adı:** `admin`
+*   **Şifre:** `adminpassword`
+*   **E-posta:** `admin@baykar.com`
 
 ---
 
