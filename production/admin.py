@@ -7,15 +7,19 @@ from .models import Part, Employee, Assembly
 class PartAdmin(admin.ModelAdmin):
     model = Part
 
-    list_display = ['name', 'aircraft_type']
-    list_filter = ['name', 'aircraft_type']
-    search_fields = ['name', 'aircraft_type']
-    ordering = ['name', 'aircraft_type']
+    list_display = ['id', 'name', 'aircraft_type', 'is_used', 'is_recycled', 'created_by', 'created_at']
+    list_filter = ['name', 'aircraft_type', 'is_used', 'is_recycled']
+    search_fields = ['created_by__username']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         (None, {
-            'fields': ('name', 'aircraft_type')
+            'fields': ('name', 'aircraft_type', 'is_used', 'is_recycled', 'created_by')
         }),
+        ('Zaman Bilgileri', {
+            'fields': ('created_at', 'updated_at')
+        })
     )
 
 
@@ -23,16 +27,16 @@ class PartAdmin(admin.ModelAdmin):
 class EmployeeAdmin(UserAdmin):
     model = Employee
 
-    list_display = ['username', 'team']
-    list_filter = ['username', 'team']
-    search_fields = ['username', 'team']
-    ordering = ['username', 'team']
+    list_display = ['username', 'email', 'team', 'is_staff']
+    list_filter = ['team', 'is_staff', 'is_superuser']
+    search_fields = ['username', 'email']
+    ordering = ['username']
 
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('team',)}),
+        ('Takım Ayarları', {'fields': ('team',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('team',)}),
+        ('Takım Ayarları', {'fields': ('team',)}),
     )
 
 
@@ -40,22 +44,24 @@ class EmployeeAdmin(UserAdmin):
 class AssemblyAdmin(admin.ModelAdmin):
     model = Assembly
 
-    list_display = ['employee', 'aircraft_type', 'is_completed']
-    list_filter = ['employee', 'aircraft_type', 'is_completed']
-    search_fields = ['employee', 'aircraft_type', 'is_completed']
-    ordering = ['employee', 'aircraft_type', 'is_completed']
+    list_display = ['id', 'employee', 'aircraft_type', 'assembled_at', 'is_completed']
+    list_filter = ['aircraft_type', 'is_completed']
+    search_fields = ['employee__username']
+    ordering = ['-assembled_at']
+    readonly_fields = ['assembled_at']
 
     fieldsets = (
         (None, {
-            'fields': ('employee', 'aircraft_type', 'is_completed')
+            'fields': ('employee', 'aircraft_type', 'is_completed', 'assembled_at')
         }),
-        ('Parts', {
+        ('Kullanılan Parçalar', {
             'fields': ('wing', 'fuselage', 'tail', 'avionics')
         }),
     )
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
+        # Filter dropdown to show only corresponding parts that are not used/recycled (or currently selected parts)
         form.base_fields['wing'].queryset = Part.objects.filter(name='wing')
         form.base_fields['fuselage'].queryset = Part.objects.filter(name='fuselage')
         form.base_fields['tail'].queryset = Part.objects.filter(name='tail')

@@ -1,106 +1,110 @@
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.viewsets import ModelViewSet
-from .models import Part, Employee, Assembly
-from .serializers import PartSerializer, EmployeeSerializer, AssemblySerializer
-from drf_spectacular.utils import extend_schema, extend_schema_view
-from .permissions import *
-from django_filters.rest_framework import DjangoFilterBackend
-from .filters import PartFilter
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+from django_filters.rest_framework import DjangoFilterBackend
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as APIValidationError
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
+from .models import Part, Employee, Assembly
+from .serializers import (
+    PartSerializer, EmployeeSerializer, AssemblySerializer, AssemblyCreateSerializer
+)
+from .permissions import IsAssemblyTeam, TeamBasedPartPermission
+from .filters import PartFilter
+from .services import PartService, InventoryService
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List all parts",
-        description="Retrieve a list of all parts available in the system.",
+        summary="List all active parts",
+        description="Retrieve a list of all non-recycled parts by default. Pass include_recycled=true to see recycled.",
         tags=["Parts"],
-        responses={200: PartSerializer(many=True)},
     ),
     retrieve=extend_schema(
         summary="Retrieve a single part",
         description="Get detailed information about a specific part by its ID.",
         tags=["Parts"],
-        responses={200: PartSerializer},
     ),
     create=extend_schema(
         summary="Create a new part",
-        description="Add a new part to the system by providing the required details.",
+        description="Add a new part to the system. Must match the employee's team type (e.g. wing team creates wing part).",
         tags=["Parts"],
-        request=PartSerializer,
-        responses={201: PartSerializer},
     ),
     update=extend_schema(
         summary="Update an existing part",
-        description="Modify the details of an existing part by providing its ID.",
+        description="Modify the details of an existing part.",
         tags=["Parts"],
-        request=PartSerializer,
-        responses={200: PartSerializer},
     ),
     partial_update=extend_schema(
         summary="Partially update a part",
-        description="Update specific fields of a part by its ID.",
+        description="Update specific fields of a part.",
         tags=["Parts"],
-        request=PartSerializer,
-        responses={200: PartSerializer},
     ),
     destroy=extend_schema(
-        summary="Delete a part",
-        description="Remove a part from the system by its ID.",
+        summary="Recycle (delete) a part",
+        description="Marks a part as recycled (is_recycled=True). Fails if the part is already used in an aircraft.",
         tags=["Parts"],
-        responses={204: None},
     ),
 )
 class PartViewSet(ModelViewSet):
-    queryset = Part.objects.all()
     serializer_class = PartSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TeamBasedPartPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_class = PartFilter
+
+    def get_queryset(self):
+        queryset = Part.objects.all()
+        # By default exclude recycled parts
+        include_recycled = self.request.query_params.get('include_recycled', 'false').lower() == 'true'
+        if not include_recycled:
+            queryset = queryset.filter(is_recycled=False)
+        return queryset
+
+    def perform_create(self, serializer):
+        try:
+            PartService.create_part(
+                employee=self.request.user,
+                name=serializer.validated_data['name'],
+                aircraft_type=serializer.validated_data['aircraft_type']
+            )
+        except DjangoValidationError as e:
+            raise APIValidationError(e.message)
+
+    def destroy(self, request, *args, **kwargs):
+        part = self.get_object()
+        try:
+            PartService.recycle_part(part)
+            return Response({"detail": "Parça başarıyla geri dönüşüme gönderildi."}, status=status.HTTP_200_OK)
+        except DjangoValidationError as e:
+            return Response({"detail": e.message}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema_view(
     list=extend_schema(
         summary="List all employees",
-        description="Retrieve a list of all employees.",
         tags=["Employees"],
-        responses={200: EmployeeSerializer(many=True)},
     ),
     retrieve=extend_schema(
         summary="Retrieve an employee",
-        description="Get detailed information about a specific employee.",
         tags=["Employees"],
-        responses={200: EmployeeSerializer},
     ),
     create=extend_schema(
         summary="Create a new employee",
-        description="Add a new employee to the system.",
         tags=["Employees"],
-        request=EmployeeSerializer,
-        responses={201: EmployeeSerializer},
     ),
     update=extend_schema(
         summary="Update an employee",
-        description="Update the details of an existing employee.",
         tags=["Employees"],
-        request=EmployeeSerializer,
-        responses={200: EmployeeSerializer},
     ),
     partial_update=extend_schema(
         summary="Partially update an employee",
-        description="Modify specific fields of an employee.",
         tags=["Employees"],
-        request=EmployeeSerializer,
-        responses={200: EmployeeSerializer},
     ),
     destroy=extend_schema(
         summary="Delete an employee",
-        description="Remove an employee from the system.",
         tags=["Employees"],
-        responses={204: None},
     ),
 )
 class EmployeeViewSet(ModelViewSet):
@@ -111,70 +115,51 @@ class EmployeeViewSet(ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        summary="List all assemblies",
-        description="Retrieve a list of all assemblies in the system.",
+        summary="List all assembled aircrafts",
         tags=["Assemblies"],
-        responses={200: AssemblySerializer(many=True)},
     ),
     retrieve=extend_schema(
-        summary="Retrieve an assembly",
-        description="Get detailed information about a specific assembly.",
+        summary="Retrieve assembled aircraft details",
         tags=["Assemblies"],
-        responses={200: AssemblySerializer},
     ),
     create=extend_schema(
-        summary="Create a new assembly",
-        description="Add a new assembly with the required details.",
+        summary="Assemble a new aircraft",
+        description="Combine a Wing, Fuselage, Tail, and Avionics part of the same aircraft type into a new aircraft.",
         tags=["Assemblies"],
-        request=AssemblySerializer,
-        responses={201: AssemblySerializer},
-    ),
-    update=extend_schema(
-        summary="Update an assembly",
-        description="Modify the details of an existing assembly.",
-        tags=["Assemblies"],
-        request=AssemblySerializer,
-        responses={200: AssemblySerializer},
-    ),
-    partial_update=extend_schema(
-        summary="Partially update an assembly",
-        description="Update specific fields of an assembly.",
-        tags=["Assemblies"],
-        request=AssemblySerializer,
-        responses={200: AssemblySerializer},
-    ),
-    destroy=extend_schema(
-        summary="Delete an assembly",
-        description="Remove an assembly from the system.",
-        tags=["Assemblies"],
-        responses={204: None},
+        request=AssemblyCreateSerializer,
     ),
 )
 class AssemblyViewSet(ModelViewSet):
     queryset = Assembly.objects.all()
-    serializer_class = AssemblySerializer
     permission_classes = [IsAuthenticated, IsAssemblyTeam]
 
-@extend_schema_view(
-        retrieve=extend_schema(
-            summary="Retrieve user information",
-            description="Get detailed information about the currently logged-in user.",
-            tags=["User"],
-            responses={200: EmployeeSerializer},
-        ),
-    )
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AssemblyCreateSerializer
+        return AssemblySerializer
+
+
 class UserDataView(APIView):
     serializer_class = EmployeeSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="Retrieve current user profile",
+        tags=["User"],
+        responses={200: EmployeeSerializer},
+    )
     def get(self, request):
         serializer = self.serializer_class(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-def index(request):
-    return render(request, 'login.html')
+class InventoryStatusView(APIView):
+    permission_classes = [IsAuthenticated]
 
-
-def dashboard(request):
-    return render(request, 'dashboard.html')
+    @extend_schema(
+        summary="Retrieve active inventory counts and missing parts warnings",
+        tags=["Inventory"],
+    )
+    def get(self, request):
+        status_data = InventoryService.get_inventory_status()
+        return Response(status_data, status=status.HTTP_200_OK)

@@ -21,11 +21,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from production.views import index, dashboard
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('dashboard/', dashboard, name='dashboard'),
+    path('', RedirectView.as_view(url='/swagger/'), name='index'),
     path('admin/', admin.site.urls),
     path('api/', include('production.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
