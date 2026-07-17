@@ -45,5 +45,6 @@ jobs:
         DEBUG: "True"
         LANGUAGE_CODE: tr
         ALLOWED_HOSTS: localhost
+        CSRF_TRUSTED_ORIGINS: http://localhost:8000
       run: |
         python manage.py test
