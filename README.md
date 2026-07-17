@@ -25,6 +25,24 @@ Bu proje, BAYKAR Arka Uç Yazılım Uzmanı pozisyonu için özel olarak gelişt
 
 ---
 
+## 📸 Arayüz Ekran Görüntüleri
+
+Projenin modern, responsive ve glassmorphism tasarımlı web arayüzünden örnek ekran görüntüleri:
+
+### 1. Giriş Ekranı
+![Giriş Ekranı](docs/images/login.png)
+
+### 2. Envanter & Stok Takip Paneli
+![Envanter & Stok Takip Paneli](docs/images/inventory.png)
+
+### 3. Parça Üretim İstasyonu
+![Parça Üretim İstasyonu](docs/images/production.png)
+
+### 4. Uçak Montaj İstasyonu
+![Uçak Montaj İstasyonu](docs/images/assembly.png)
+
+---
+
 ## 🚀 Yerel Kurulum & Çalıştırma
 
 ### 1. Backend Kurulumu
