@@ -3,21 +3,25 @@ FROM python:3.9-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update
-
-RUN apt-get install libpq-dev -y
-RUN apt-get install python3-dev build-essential -y
-RUN apt-get install postgresql-client -y
-
-RUN pip install --upgrade pip
-RUN pip install virtualenv && python -m venv venv $VIRTUAL_ENV
-
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
 WORKDIR /srv/app
-COPY . /srv/app
 
-ADD ./requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
+# Install system dependencies in a single layer and clean up lists
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    build-essential \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN python manage.py collectstatic --noinput
+# Install python dependencies first (Docker cache optimization)
+COPY requirements.txt /srv/app/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY . /srv/app/
+
+# Expose Django port
+EXPOSE 8000
+
+# Run collectstatic with dummy environment variables to prevent build failure
+RUN DATABASE_URL=sqlite:///:memory: SECRET_KEY=build-time-secret-key-12345 python manage.py collectstatic --noinput
