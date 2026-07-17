@@ -29,4 +29,14 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f"Employee '{username}' already exists.")
         
-        self.stdout.write(self.style.SUCCESS("Database seeding completed! Password for all is: testpassword"))
+        # Create superuser (admin) if not exists
+        if not Employee.objects.filter(username='admin').exists():
+            Employee.objects.create_superuser(
+                username='admin',
+                password='adminpassword',
+                email='admin@baykar.com',
+                team='assemblyTeam'
+            )
+            self.stdout.write(self.style.SUCCESS("Superuser 'admin' successfully created!"))
+            
+        self.stdout.write(self.style.SUCCESS("Database seeding completed! Password for workers: testpassword, for admin: adminpassword"))
