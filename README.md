@@ -41,6 +41,12 @@ Projenin modern, responsive ve glassmorphism tasarımlı web arayüzünden örne
 ### 4. Uçak Montaj İstasyonu
 ![Uçak Montaj İstasyonu](docs/images/assembly.png)
 
+### 5. Swagger API Dokümantasyonu (Backend)
+![Swagger API Dokümantasyonu](docs/images/swagger.png)
+
+### 6. Django Yönetim (Admin) Paneli
+![Django Yönetim Paneli](docs/images/admin.png)
+
 ---
 
 ## 🚀 Yerel Kurulum & Çalıştırma
